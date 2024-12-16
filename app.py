@@ -34,7 +34,7 @@ def login_api(input: LoginDetails):
 def confirm_api(input: LoginDetails):
     try:
         cimb = CIMB(input.username, input.password, input.account_number,input.proxy_list)
-        response = cimb.get_balance()
+        response = cimb.get_balance(input.account_number)
         return APIResponse.json_format(response)
     except Exception as e:
         response = str(e)
@@ -51,15 +51,14 @@ class Transactions(BaseModel):
     username: str
     password: str
     account_number: str
-    from_date: str
-    to_date: str
+    month: str
     proxy_list: list
     
 @app.post('/get_transactions', tags=["get_transactions"])
 def get_transactions_api(input: Transactions):
     try:
-        cimb = CIMB(input.username, input.password, input.account_number)
-        response = cimb.get_transactions(input.from_date, input.to_date, input.account_number,input.proxy_list)
+        cimb = CIMB(input.username, input.password, input.account_number,input.proxy_list)
+        response = cimb.get_transactions(input.month, input.account_number,)
         return APIResponse.json_format(response)
     except Exception as e:
         response = str(e)
