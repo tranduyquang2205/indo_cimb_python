@@ -58,7 +58,7 @@ class Transactions(BaseModel):
 def get_transactions_api(input: Transactions):
     try:
         cimb = CIMB(input.username, input.password, input.account_number,input.proxy_list)
-        response = cimb.get_transactions(input.month, input.account_number,)
+        response = cimb.get_transactions(input.month, input.account_number)
         return APIResponse.json_format(response)
     except Exception as e:
         response = str(e)

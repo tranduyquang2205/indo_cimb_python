@@ -102,6 +102,7 @@ class CIMB:
             'is_login': self.is_login,
             'time_login': self.time_login,
             'access_token': self.access_token,
+            'account_list': self.account_list,
             'proxies':self.proxies
         }
         with open(self.file, 'w') as f:
@@ -118,6 +119,7 @@ class CIMB:
         self.is_login = data.get('is_login', '')
         self.time_login = data.get('time_login', '')
         self.access_token = data.get('access_token', '')
+        self.account_list = data.get('account_list', '')
         self.proxies = data['proxies']
         
     def Pt(self,cookie_name):
@@ -293,13 +295,13 @@ class CIMB:
         except Exception as e:
             result = response.text
         refreshed = False
-        if access_token and access_token != self.access_token and result and 'myaccountresponse' in result and 'status' in result['myaccountresponse'] and result['myaccountresponse']['status'] == "00":
+        if access_token and access_token != self.access_token:
             print('new_access_token')
             self.access_token = access_token
             self.time_login = time.time()
             self.is_login = True
             self.save_data()
-            if refresh_access_token:
+            if refresh_access_token and result and 'myaccountresponse' in result and 'status' in result['myaccountresponse'] and result['myaccountresponse']['status'] == "00":
                 refreshed = True
         if refresh_access_token:
             return result,refreshed
@@ -338,6 +340,7 @@ class CIMB:
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=12)) + '|' + str(int(datetime.now().timestamp()))
     
     def do_login(self):
+        print('login')
         data = {
             "username": self.username,
             "password": self.encrypt_password(self.username,self.password,"CxuzTeZb8wRWyN4x"),
@@ -345,6 +348,7 @@ class CIMB:
         }
         result = self.curl_post(self.url['login'], data)
         if 'loginresponse' in result and 'status' in result['loginresponse'] and result['loginresponse']['status'] == 1:
+            print('login success')
             self.cifNo = result['loginresponse']['cif']
             self.is_login = True
             self.time_login = time.time()
@@ -421,11 +425,12 @@ class CIMB:
         return (result)
     def refresh_access_token(self,):
         result,refreshed = self.curl_post(self.url['account_list'],{},refresh_access_token=True)
+        print('refresh_access_token',result,refreshed)
         if not refreshed:
             login = self.do_login()
             if not login['success']:
                 return login
-        print('refresh_access_token',result)
+        print('refresh_access_token',result,refreshed)
         return result
         
         
@@ -444,6 +449,7 @@ class CIMB:
         if result and 'myaccountresponse' in result and 'status' in result['myaccountresponse'] and result['myaccountresponse']['status'] == "00" and 'sofShariah' in result['myaccountresponse'] and 'saaccountList' in result['myaccountresponse']['sofShariah']:
             account_list = result['myaccountresponse']['sofShariah']['saaccountList']
             self.account_list = account_list
+            self.save_data()
             for account_index, account_data in account_list.items():
                 res_account_number = account_data.get("accountNumber", self.account_number)
                 account_balance = account_data.get("accountBalance", 0)
@@ -492,11 +498,14 @@ class CIMB:
         return str(months_difference)
 
     def get_transactions(self, month="12/2024", account_number='',retry=False):
+        print(account_number,self.account_list)
         account_index = None
         if not self.is_login or time.time()- self.time_login > 24*3600:
                 login = self.do_login()
                 if not login['success']:
                     return login
+        if not self.account_list:
+            self.get_balance(account_number)
         for res_account_index, account_data in self.account_list.items():
             res_account_number = account_data.get("accountNumber", self.account_number)                
             if account_number == res_account_number:
