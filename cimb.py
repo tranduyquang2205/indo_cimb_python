@@ -358,6 +358,14 @@ class CIMB:
                 'cifNo': self.cifNo,
                 'data': result if result else ""
             }
+        elif 'apierror' in result and 'message' in result['apierror'] and result['apierror']['message'] == "Username or Password Invalid":
+            return {
+                'code': 444,
+                'success': False,
+                'message': result['loginresponse']['message'] if 'loginresponse' in result and 'message' in result['loginresponse'] else result,
+                "param": data,
+                'data': result if result else ""
+            }
         else:
             return {
                 'code': 500,
