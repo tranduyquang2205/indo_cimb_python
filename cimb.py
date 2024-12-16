@@ -362,6 +362,15 @@ class CIMB:
                 'cifNo': self.cifNo,
                 'data': result if result else ""
             }
+        elif 'apierror' in result and 'message' in result['apierror'] and result['apierror']['message'] == "User Already Login":
+            return {
+                'code': 200,
+                'success': True,
+                'message': "success",
+                'access_token': self.access_token,
+                'cifNo': self.cifNo,
+                'data': result if result else ""
+            }
         elif 'apierror' in result and 'message' in result['apierror'] and result['apierror']['message'] == "Username or Password Invalid":
             return {
                 'code': 444,
